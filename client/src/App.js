@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+// ✅ CHANGE THIS to your Render backend URL
+const API_BASE = "https://resume-analyzer-soct.onrender.com";
+
 function App() {
   const [file, setFile] = useState(null);
   const [role, setRole] = useState("");
@@ -10,14 +13,26 @@ function App() {
 
   // 🔄 Fetch roles from backend
   useEffect(() => {
-    axios.get("https://resume-analyzer-backend.onrender.com/roles")
-      .then(res => {
-        setRoles(res.data);
-        setRole(res.data[0]);
-      })
-      .catch(err => console.error(err));
+    const fetchRoles = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/roles`);
+
+        if (response.data && response.data.length > 0) {
+          setRoles(response.data);
+          setRole(response.data[0]);
+        } else {
+          console.warn("No roles returned from API");
+        }
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+        alert("Failed to load job roles. Check backend.");
+      }
+    };
+
+    fetchRoles();
   }, []);
 
+  // 📤 Upload + Analyze
   const handleUpload = async () => {
     if (!file) return alert("Upload resume first");
 
@@ -28,26 +43,21 @@ function App() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "https://resume-analyzer-backend.onrender.com/analyze",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+      const response = await axios.post(
+        `${API_BASE}/analyze`,
+        formData
       );
 
-      setResult(res.data);
-    } catch (err) {
-      console.error(err);
+      setResult(response.data);
+    } catch (error) {
+      console.error("Analyze error:", error);
       alert("Error analyzing resume");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🎯 Score color
+  // 🎯 Score color logic
   const getScoreColor = (score) => {
     if (score >= 80) return "text-green-600";
     if (score >= 50) return "text-yellow-500";
@@ -56,7 +66,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 flex items-center justify-center p-4">
-
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-2xl">
 
         <h1 className="text-3xl font-bold text-center mb-2">
@@ -95,17 +104,26 @@ function App() {
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
-          {roles.map((r, i) => (
-            <option key={i} value={r}>
-              {r.replace("_", " ").toUpperCase()}
-            </option>
-          ))}
+          {roles.length > 0 ? (
+            roles.map((r, i) => (
+              <option key={i} value={r}>
+                {r.replace("_", " ").toUpperCase()}
+              </option>
+            ))
+          ) : (
+            <option>Loading roles...</option>
+          )}
         </select>
 
         {/* Button */}
         <button
           onClick={handleUpload}
-          className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white w-full py-3 rounded-lg hover:scale-105 transition"
+          disabled={loading}
+          className={`w-full py-3 rounded-lg text-white transition ${
+            loading
+              ? "bg-gray-400"
+              : "bg-gradient-to-r from-indigo-500 to-blue-600 hover:scale-105"
+          }`}
         >
           {loading ? "Analyzing..." : "Analyze Resume"}
         </button>
@@ -130,30 +148,38 @@ function App() {
               ></div>
             </div>
 
-            {/* Cards */}
+            {/* Skills */}
             <div className="grid md:grid-cols-2 gap-4 mt-6">
 
-              {/* Matched Skills */}
+              {/* Matched */}
               <div className="bg-green-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-green-700 mb-2">
                   ✅ Matched Skills
                 </h3>
                 <ul className="text-sm">
-                  {(result.matched || []).map((item, i) => (
-                    <li key={i}>• {item}</li>
-                  ))}
+                  {(result.matched || []).length > 0 ? (
+                    result.matched.map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))
+                  ) : (
+                    <li>No matching skills found</li>
+                  )}
                 </ul>
               </div>
 
-              {/* Missing Skills */}
+              {/* Missing */}
               <div className="bg-red-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-red-700 mb-2">
                   ❌ Missing Skills
                 </h3>
                 <ul className="text-sm">
-                  {(result.missing || []).map((item, i) => (
-                    <li key={i}>• {item}</li>
-                  ))}
+                  {(result.missing || []).length > 0 ? (
+                    result.missing.map((item, i) => (
+                      <li key={i}>• {item}</li>
+                    ))
+                  ) : (
+                    <li>No missing skills 🎉</li>
+                  )}
                 </ul>
               </div>
 
@@ -163,7 +189,7 @@ function App() {
             <div className="mt-6 bg-gray-50 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">📄 Resume Preview</h3>
               <p className="text-sm text-gray-600">
-                {result.preview}
+                {result.preview || "No preview available"}
               </p>
             </div>
 
