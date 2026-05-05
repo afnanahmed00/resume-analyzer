@@ -10,7 +10,7 @@ function App() {
 
   // 🔄 Fetch roles from backend
   useEffect(() => {
-    axios.get("http://localhost:5000/roles")
+    axios.get("https://resume-analyzer-backend.onrender.com/roles")
       .then(res => {
         setRoles(res.data);
         setRole(res.data[0]);
@@ -29,7 +29,7 @@ function App() {
       setLoading(true);
 
       const res = await axios.post(
-        "http://localhost:5000/analyze",
+        "https://resume-analyzer-backend.onrender.com/analyze",,
         formData,
         {
           headers: {
