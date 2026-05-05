@@ -29,7 +29,7 @@ function App() {
       setLoading(true);
 
       const res = await axios.post(
-        "https://resume-analyzer-backend.onrender.com/analyze",,
+        "https://resume-analyzer-backend.onrender.com/analyze",
         formData,
         {
           headers: {
