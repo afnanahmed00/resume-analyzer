@@ -7,7 +7,11 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 
 const app = express();
-app.use(cors());
+
+app.use(cors({
+  origin: "*"
+}));
+
 app.use(express.json());
 
 const upload = multer();
