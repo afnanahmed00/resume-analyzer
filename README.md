@@ -92,7 +92,7 @@ npm start
 Frontend is deployed on Vercel
 Backend is deployed on Render
 
---------link---------
+-link-:https://resume-analyzer-eight-omega.vercel.app/
 
 ---
 
